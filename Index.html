@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#172126">
+<title>Ironclad Recycling</title>
+<style>
+:root{color-scheme:dark;--bg:#10181c;--panel:#1b282e;--panel2:#24343b;--green:#79bd91;--orange:#e69a43;--muted:#a9b7bc;--white:#f4f7f6}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(160deg,#172329,#0e1519 60%);color:var(--white);font:16px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100vh}
+header{padding:24px 18px 18px;border-bottom:1px solid #33434a;background:#172329}
+.brand{font-size:26px;font-weight:900;letter-spacing:2px}.sub{color:var(--green);font-size:11px;font-weight:800;letter-spacing:2px;margin-top:4px}
+main{max-width:720px;margin:auto;padding:18px}.hero{background:linear-gradient(135deg,#304a43,#1c2a30);border:1px solid #48665a;border-radius:18px;padding:22px;margin-bottom:16px}
+h1{font-size:25px;margin:0 0 8px}h2{font-size:19px;margin:0 0 12px}p{line-height:1.5;color:#d5dfdc;margin:8px 0}
+.panel{background:var(--panel);border:1px solid #33464d;border-radius:16px;padding:16px;margin:14px 0}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.stat{background:var(--panel2);border-radius:12px;padding:12px}.stat small{display:block;color:var(--muted);font-size:12px}.stat strong{font-size:23px;display:block;margin-top:4px}
+button{width:100%;border:0;border-radius:12px;padding:15px 14px;font-size:15px;font-weight:750;margin:6px 0;background:var(--green);color:#102019;cursor:pointer}
+button.secondary{background:#2b3b42;color:var(--white);border:1px solid #53636a}button.orange{background:var(--orange);color:#24170b}
+button:disabled{opacity:.45}.tag{display:inline-block;background:#274333;color:#b9ebc9;border-radius:99px;padding:5px 9px;font-size:11px;font-weight:800}
+.muted{color:var(--muted);font-size:13px}.choice{background:#26363d;color:white;border:1px solid #52636a;text-align:left;line-height:1.35}
+.progress{height:9px;background:#34444a;border-radius:20px;overflow:hidden}.progress span{display:block;height:100%;background:var(--green)}
+footer{text-align:center;color:#829197;font-size:11px;padding:20px}
+input{width:100%;padding:14px;border-radius:10px;border:1px solid #52636a;background:#10191d;color:white;font-size:16px;margin:8px 0}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<header><div class="brand">IRONCLAD</div><div class="sub">RECYCLING · EXETER WORKS</div></header>
+<main>
+<section id="menu">
+ <div class="hero"><span class="tag">MOBILE PROTOTYPE 0.1</span><h1>Your career starts here.</h1><p>Start as a new employee. Learn the yard, earn trust, make decisions and work your way towards running Ironclad.</p></div>
+ <div class="panel"><h2>Welcome to Exeter Works</h2><p>Two incinerator contracts. One busy recycling yard. Your choices shape your future.</p><button onclick="newCareer()">NEW CAREER</button><button class="secondary" onclick="continueCareer()">CONTINUE CAREER</button><p class="muted" id="saveStatus">Career progress is saved on this device when you make a choice.</p></div>
+</section>
+<section id="game" class="hidden">
+ <div class="stats">
+  <div class="stat"><small>DAY</small><strong id="day">1</strong></div>
+  <div class="stat"><small>JOB TITLE</small><strong id="rank">New Starter</strong></div>
+  <div class="stat"><small>REPUTATION</small><strong id="rep">50</strong><small>/ 100</small></div>
+  <div class="stat"><small>SAFETY</small><strong id="safe">100</strong><small>/ 100</small></div>
+ </div>
+ <div class="panel"><div class="tag" id="time">06:00 · MORNING SHIFT</div><h2 id="sceneTitle" style="margin-top:12px">Your first morning</h2><p id="story"></p><div id="choices"></div></div>
+ <div class="panel"><h2>Employee record</h2><p class="muted">Production contribution</p><div class="progress"><span id="prodBar" style="width:50%"></span></div><p class="muted" id="feedback">Your career record will update as you make decisions.</p></div>
+ <button class="secondary" onclick="showMenu()">RETURN TO MAIN MENU</button>
+</section>
+</main>
+<footer>IRONCLAD RECYCLING · EXETER WORKS · PROTOTYPE</footer>
+<script>
+const KEY="ironcladCareer01";
+let s=null;
+const initial=()=>({day:1,rep:50,safe:100,prod:50,rank:"New Starter",step:0,name:"Employee"});
+function save(){try{localStorage.setItem(KEY,JSON.stringify(s));}catch(e){}}
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||"null")}catch(e){return null}}
+function newCareer(){s=initial();save();showGame();render()}
+function continueCareer(){s=load();if(!s){alert("No saved career yet. Start a new career first.");return}showGame();render()}
+function showMenu(){document.getElementById("menu").classList.remove("hidden");document.getElementById("game").classList.add("hidden")}
+function showGame(){document.getElementById("menu").classList.add("hidden");document.getElementById("game").classList.remove("hidden")}
+function clamp(n){return Math.max(0,Math.min(100,n))}
+function render(){
+ document.getElementById("day").textContent=s.day;
+ document.getElementById("rank").textContent=s.rank;
+ document.getElementById("rep").textContent=s.rep;
+ document.getElementById("safe").textContent=s.safe;
+ document.getElementById("prodBar").style.width=s.prod+"%";
+ const title=document.getElementById("sceneTitle"),story=document.getElementById("story"),choices=document.getElementById("choices");
+ choices.innerHTML="";
+ if(s.step===0){
+  document.getElementById("time").textContent="06:00 · MORNING SHIFT";
+  title.textContent="Your first morning";
+  story.textContent="You've arrived at Ironclad Recycling as a new yard operative. Two incinerators are contracted to deliver 500 tonnes each today. Your supervisor, Mark, approaches: “Morning. Welcome aboard. How would you like to start?”";
+  add("A · Shadow an experienced excavator operator","You show patience and a willingness to learn. Mark appreciates that you want to understand the job before taking responsibility.",{rep:8,safe:5,prod:-2});
+  add("B · Help organise incoming deliveries","You volunteer to help the weighbridge and tipping team keep deliveries moving.",{rep:6,safe:2,prod:8});
+  add("C · Volunteer to help the processing team","Your enthusiasm is noticed, but you are reminded not to rush into unfamiliar work.",{rep:3,safe:-5,prod:10});
+ } else if(s.step===1){
+  document.getElementById("time").textContent="08:30 · PROCESSING YARD";
+  title.textContent="A problem at the crusher";
+  story.textContent="Material is backing up near the primary crusher feed area. The operator tells Mark the hopper needs attention. Mark turns to you: “What's your approach?”";
+  add("A · Report the problem and help coordinate","You communicate clearly and help the team respond safely.",{rep:8,safe:5,prod:5});
+  add("B · Support the operator with ground duties","You help with approved tasks while keeping clear of moving machinery.",{rep:5,safe:8,prod:6});
+  add("C · Try to clear it yourself without checking","You act without permission or isolation. Mark stops you before anyone is hurt, but the incident is taken seriously.",{rep:-8,safe:-22,prod:-5});
+ } else {
+  document.getElementById("time").textContent="16:00 · END OF SHIFT";
+  title.textContent="Your first shift is complete";
+  story.textContent=(s.safe<85?"Mark says: “Your enthusiasm is clear, but safety and procedure have to come first.”":s.rep>=62?"Mark says: “Good effort today. You've shown initiative and a sensible attitude. Keep learning.”":"Mark says: “Not a bad start. There's plenty to learn, and we'll see how you get on tomorrow.”")+" Your decisions have been added to your employee record.";
+  const b=document.createElement("button");b.textContent="START NEXT SHIFT";b.onclick=nextDay;choices.appendChild(b);
+  const r=document.createElement("button");r.className="secondary";r.textContent="RESTART CAREER";r.onclick=newCareer;choices.appendChild(r);
+ }
+}
+function add(label,feedback,delta){
+ const b=document.createElement("button");b.className="choice";b.textContent=label;b.onclick=()=>{s.rep=clamp(s.rep+delta.rep);s.safe=clamp(s.safe+delta.safe);s.prod=clamp(s.prod+delta.prod);s.step++;document.getElementById("feedback").textContent=feedback;if(s.rep>=75&&s.safe>=90)s.rank="Promising Operative";if(s.safe<65)s.rank="Under Review";save();render()};document.getElementById("choices").appendChild(b);
+}
+function nextDay(){s.day++;s.step=0;s.prod=clamp(s.prod+2);if(s.rep>=75&&s.safe>=90)s.rank="Yard Operative";save();render()}
+document.getElementById("saveStatus").textContent=load()?"A saved career was found on this device.":"No career saved yet. Your progress will save automatically on this device.";
+</script>
+</body></html>
