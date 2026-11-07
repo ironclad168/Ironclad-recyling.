@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#151b1b">
+<title>Ironclad Recycling — Exeter Works</title>
+<style>
+:root{--bg:#151b1b;--panel:#202929;--line:#3d4b48;--green:#a6ce39;--orange:#f39a37;--white:#f1f4ed;--muted:#aab5ad}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--white);font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none}
+#app{height:100dvh;display:flex;flex-direction:column;padding:env(safe-area-inset-top) 10px env(safe-area-inset-bottom);gap:7px}
+header{display:flex;align-items:center;justify-content:space-between;padding:6px 2px;min-height:44px}
+.brand{font-weight:900;letter-spacing:1.5px;font-size:15px}.brand span{color:var(--green)}#rank{font-size:11px;color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}.stat{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:6px 7px;min-width:0}.stat small{display:block;color:var(--muted);font-size:9px;text-transform:uppercase}.stat b{font-size:13px}
+#scene{position:relative;flex:1;min-height:230px;border:1px solid var(--line);border-radius:13px;overflow:hidden;background:#879b82}
+canvas{display:block;width:100%;height:100%;touch-action:none}
+#task{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:12px;display:flex;justify-content:space-between;gap:8px;align-items:center}
+#task strong{color:var(--green)}#message{color:var(--muted);font-size:10px;text-align:right}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:end;padding-bottom:3px}
+.controlGroup{display:flex;flex-direction:column;align-items:center;gap:3px}.controlLabel{font-size:10px;color:var(--muted);letter-spacing:.7px;text-transform:uppercase}
+.stick{width:min(39vw,154px);height:min(39vw,154px);max-height:154px;max-width:154px;border-radius:50%;border:2px solid #64746c;background:radial-gradient(circle,#34423d 0,#26332f 58%,#1b2422 60%);position:relative;touch-action:none;box-shadow:inset 0 0 20px #101615}
+.stick:before,.stick:after{content:"";position:absolute;background:#69796f;opacity:.5}.stick:before{width:1px;height:82%;left:50%;top:9%}.stick:after{height:1px;width:82%;left:9%;top:50%}
+.knob{position:absolute;width:35%;height:35%;left:32.5%;top:32.5%;border-radius:50%;background:linear-gradient(145deg,#c1e56a,#719b25);border:3px solid #e0f3b2;box-shadow:0 3px 8px #0009;pointer-events:none}
+#leftStick .knob{background:linear-gradient(145deg,#b9df59,#648c21)}#rightStick .knob{background:linear-gradient(145deg,#ffc16e,#bd681c);border-color:#ffe0b7}
+.buttons{display:flex;justify-content:center;gap:6px;flex-wrap:wrap}
+button{border:1px solid var(--line);background:#293532;color:var(--white);border-radius:9px;padding:9px 11px;font-weight:700;font-size:11px;touch-action:manipulation}
+button:active,button.active{background:#526d2b;border-color:var(--green)}
+#overlay{position:absolute;inset:0;background:#101817eF;display:flex;align-items:center;justify-content:center;padding:20px;z-index:5}
+.card{width:min(100%,420px);background:#202929;border:1px solid #52615b;border-radius:15px;padding:19px;box-shadow:0 10px 40px #0008}
+h1{font-size:23px;margin:0 0 5px}.sub{color:var(--muted);font-size:12px;line-height:1.5}
+.card button{width:100%;margin-top:12px;padding:13px;background:#739c28;border:0;color:#10170b;font-size:14px}
+#cameraHint{position:absolute;top:8px;right:8px;background:#17201dcc;padding:5px 8px;border-radius:7px;font-size:10px;color:#e9eee5;pointer-events:none}
+@media(min-width:700px){#app{max-width:900px;margin:auto}.stick{width:154px;height:154px}}
+</style>
+</head>
+<body>
+<div id="app">
+<header><div class="brand"><span>IRONCLAD</span> RECYCLING</div><div id="rank">EXETER WORKS · NEW STARTER</div></header>
+<div class="stats">
+ <div class="stat"><small>Fuel</small><b id="fuel">92%</b></div><div class="stat"><small>Engine</small><b id="engine">850 RPM</b></div><div class="stat"><small>Bucket</small><b id="bucket">Empty</b></div><div class="stat"><small>Shift tonnes</small><b id="tonnes">0 t</b></div>
+</div>
+<div id="scene"><canvas id="game"></canvas><div id="cameraHint">THIRD-PERSON · DRAG TO ROTATE CAMERA</div>
+<div id="overlay"><div class="card"><h1>Ironclad: Exeter Works</h1><div class="sub">Your first shift starts here. Complete the pre-start, collect IBA from the stockpile and feed the crusher. This is an early playable mobile prototype with touch joysticks and a third-person camera.</div><button id="start">START SHIFT</button></div></div>
+</div>
+<div id="task"><div><strong id="taskTitle">Task 1 · Pre-start checks</strong><div id="taskText">Check the machine before moving off.</div></div><div id="message">Safety first</div></div>
+<div class="controls">
+ <div class="controlGroup"><div class="controlLabel">Drive / steer</div><div class="stick" id="leftStick"><div class="knob"></div></div></div>
+ <div class="controlGroup"><div class="controlLabel">Lift / bucket</div><div class="stick" id="rightStick"><div class="knob"></div></div></div>
+</div>
+<div class="buttons"><button id="prestart">✓ PRE-START</button><button id="collect">COLLECT IBA</button><button id="dump">TIP INTO CRUSHER</button><button id="camera">CAMERA RESET</button></div>
+</div>
+<script>
+(()=>{
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+const $=id=>document.getElementById(id);
+let W=0,H=0,started=false,checked=false,load=0,tonnes=0,fuel=92,x=0,z=0,heading=0,steer=0,throttle=0,lift=0,tilt=0,cam=0,camTouch=null,task=0;
+function resize(){const r=canvas.getBoundingClientRect();W=canvas.width=Math.max(1,Math.floor(r.width*devicePixelRatio));H=canvas.height=Math.max(1,Math.floor(r.height*devicePixelRatio));ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);W=r.width;H=r.height}
+new ResizeObserver(resize).observe(canvas);resize();
+function text(t,x,y,size=12,color='#fff',align='left'){ctx.fillStyle=color;ctx.font=`700 ${size}px system-ui`;ctx.textAlign=align;ctx.fillText(t,x,y)}
+function polygon(points,fill,stroke){ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fillStyle=fill;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1;ctx.stroke()}}
+function draw(){
+ const w=W,h=H;ctx.clearRect(0,0,w,h);
+ // perspective outdoor yard
+ const sky=ctx.createLinearGradient(0,0,0,h*.55);sky.addColorStop(0,'#9db6bc');sky.addColorStop(1,'#d0d0ad');ctx.fillStyle=sky;ctx.fillRect(0,0,w,h*.58);
+ ctx.fillStyle='#75896d';ctx.fillRect(0,h*.48,w,h*.52);
+ polygon([[0,h*.55],[w*.25,h*.52],[w*.72,h*.52],[w,h*.56],[w,h],[0,h]],'#777b68');
+ // yard markings and stockpile
+ polygon([[w*.03,h*.56],[w*.23,h*.34],[w*.43,h*.56]],'#77766a');
+ polygon([[w*.04,h*.57],[w*.23,h*.39],[w*.42,h*.57]],'#8b8778');
+ for(let i=0;i<7;i++){ctx.strokeStyle='#a7a28f66';ctx.beginPath();ctx.moveTo(w*.02+i*w*.05,h*.62);ctx.lineTo(w*.42+i*w*.04,h*.96);ctx.stroke()}
+ // crusher
+ polygon([[w*.73,h*.42],[w*.91,h*.42],[w*.95,h*.62],[w*.70,h*.62]],'#414c48','#202a27');
+ polygon([[w*.76,h*.39],[w*.89,h*.39],[w*.91,h*.44],[w*.74,h*.44]],'#9aa39a','#303a35');
+ text('CRUSHER',w*.82,h*.36,Math.max(9,w*.025),'#fff','center');
+ // loader centered with camera rotation slight illusion
+ const cx=w*.51+Math.sin(cam)*w*.08, cy=h*.70;
+ ctx.save();ctx.translate(cx,cy);ctx.rotate(heading*.12);
+ // shadow
+ ctx.fillStyle='#1a211d66';ctx.beginPath();ctx.ellipse(0,20,Math.min(w*.16,76),18,0,0,Math.PI*2);ctx.fill();
+ // wheels
+ for(const xx of [-42,42])for(const yy of [-5,28]){ctx.fillStyle='#202725';ctx.beginPath();ctx.ellipse(xx,yy,15,22,0,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#68736d';ctx.lineWidth=2;ctx.stroke()}
+ // body
+ polygon([[-54,-18],[-42,-43],[32,-43],[55,-17],[49,28],[-50,28]],'#a3bd35','#303c20');
+ polygon([[-31,-42],[-23,-70],[19,-70],[33,-40]],'#d1d8c4','#303a34');
+ polygon([[-22,-66],[15,-66],[25,-43],[-28,-43]],'#536d68','#202b27');
+ // boom and bucket
+ ctx.strokeStyle='#d0a04c';ctx.lineWidth=12;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(31,-29);ctx.lineTo(65,-64-lift*18);ctx.lineTo(88,-51-lift*18);ctx.stroke();
+ ctx.strokeStyle='#6f7c72';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(65,-64-lift*18);ctx.lineTo(90,-42-lift*18);ctx.stroke();
+ ctx.save();ctx.translate(91,-43-lift*18);ctx.rotate(tilt*.6);
+ polygon([[-2,-2],[30,0],[24,17],[4,16]],'#515b50','#1d2822');ctx.restore();
+ // cab details
+ ctx.fillStyle='#202b2a';ctx.fillRect(-12,-62,23,17);ctx.restore();
+ // labels
+ text('IBA STOCKPILE',w*.23,h*.29,Math.max(9,w*.025),'#fff','center');
+ text('EXETER WORKS',w*.5,h*.13,Math.max(12,w*.035),'#24322c','center');
+ // tiny direction indicator
+ ctx.fillStyle='#17211ddd';ctx.fillRect(8,h-29,110,20);text(`SPEED ${Math.abs(throttle*18).toFixed(0)} km/h`,14,h-15,10,'#dce8d1');
+ if(!started){ctx.fillStyle='#0002';ctx.fillRect(0,0,w,h)}
+ requestAnimationFrame(draw)
+}
+draw();
+function updateStats(){$('fuel').textContent=Math.round(fuel)+'%';$('engine').textContent=(850+Math.abs(throttle)*1250)+' RPM';$('bucket').textContent=load?'Loaded':'Empty';$('tonnes').textContent=tonnes+' t'}
+function setTask(title,desc,msg){$('taskTitle').textContent=title;$('taskText').textContent=desc;$('message').textContent=msg}
+function stick(id,cb){const el=$(id),knob=el.querySelector('.knob');let active=null;
+function move(e){const r=el.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,dx=(e.clientX-cx)/(r.width*.36),dy=(e.clientY-cy)/(r.height*.36),a=Math.min(1,Math.hypot(dx,dy)),nx=dx/(Math.hypot(dx,dy)||1)*a,ny=dy/(Math.hypot(dx,dy)||1)*a;knob.style.transform=`translate(${nx*48}px,${ny*48}px)`;cb(nx,-ny)}
+function end(e){if(active!==e.pointerId)return;active=null;knob.style.transform='';cb(0,0)}
+el.addEventListener('pointerdown',e=>{active=e.pointerId;el.setPointerCapture(active);move(e)});el.addEventListener('pointermove',e=>{if(active===e.pointerId)move(e)});el.addEventListener('pointerup',end);el.addEventListener('pointercancel',end)
+}
+stick('leftStick',(a,b)=>{steer=a;throttle=b;if(started&&checked){x+=a*.002;z+=b*.002;heading+=a*.012;fuel=Math.max(0,fuel-Math.abs(b)*.0008);updateStats()}});
+stick('rightStick',(a,b)=>{lift=Math.max(-1,Math.min(1,b));tilt=Math.max(-1,Math.min(1,a))});
+$('start').onclick=()=>{$('overlay').style.display='none';started=true;setTask('Task 1 · Pre-start checks','Complete the machine pre-start before driving.','Safety first')};
+$('prestart').onclick=()=>{if(!started)return;checked=true;task=1;setTask('Task 2 · Collect IBA','Drive towards the stockpile, then press COLLECT IBA.','Pre-start complete')};
+$('collect').onclick=()=>{if(!started||!checked)return;if(load){setTask('Bucket already loaded','Tip your load into the crusher first.','Watch your bucket')}else{load=1;setTask('Task 3 · Feed the crusher','Move towards the crusher and press TIP INTO CRUSHER.','IBA collected');updateStats()}};
+$('dump').onclick=()=>{if(!started||!checked)return;if(!load){setTask('Bucket empty','Collect IBA from the stockpile first.','No material')}else{load=0;tonnes+=8;setTask('Task 4 · Keep production moving','Good work. Collect another bucket of IBA.','+8 tonnes processed');updateStats()}};
+$('camera').onclick=()=>{cam=0;heading=0};
+canvas.addEventListener('pointerdown',e=>{camTouch={x:e.clientX,y:e.clientY,id:e.pointerId};canvas.setPointerCapture(e.pointerId)});
+canvas.addEventListener('pointermove',e=>{if(camTouch&&camTouch.id===e.pointerId){cam+=(e.clientX-camTouch.x)/150;camTouch.x=e.clientX;camTouch.y=e.clientY}});
+canvas.addEventListener('pointerup',()=>camTouch=null);canvas.addEventListener('pointercancel',()=>camTouch=null);
+updateStats();
+})();
+</script>
+</body></html>
